@@ -1,45 +1,114 @@
-d3.json('https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json').then(function(data)
-{
+
+const url = "https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json"
+
+function bar(selectedValue) {
+ 
+    d3.json(url).then((data) => {
+        console.log(`Data: ${data}`);
+
+           let samples = data.samples;
+
+           let filteredData = samples.filter((sample) => sample.id === selectedValue);
+
+           let obj = filteredData[0];
+        
+        let trace = [{
+            x: obj.sample_values.slice(0,10).reverse(),
+            y: obj.otu_ids.slice(0,10).map((otu_id) => `OTU ${otu_id}`).reverse(),
+            text: obj.otu_labels.slice(0,10).reverse(),
+            type: "bar",
+            marker: {
+                color: "blue"
+            },
+            orientation: "h"
+        }];
+        
+        Plotly.newPlot("bar", trace);
+    });
+}
+  
+
+function bubble(selectedValue) {
     
-let samplesData = data
-console.log(samplesData);
-
-let samplesID = samplesData.names
-console.log(samplesID[0]);
-
-let samplesDemographics =samplesData.metadata
-console.log(samplesDemographics[0]);
-
-let samplesPlotData = samplesData.samples
-console.log(samplesPlotData[0]);
-
-let sampleLabels = samplesPlotData[0].otu_ids.map(element => `OTU ${element}`)
-let sampleValues = samplesPlotData[0].sample_values
-
-let traceBar = {
-    x: sampleValues.slice(0,10).reverse(),
-    y: sampleLabels.slice(0,10).reverse(),
-    type: 'bar',
-    orientation: 'h',
-    width: 0.8,
-    text: samplesPlotData[0].otu_labels
+    d3.json(url).then((data) => {
+       
+        let samples = data.samples;
+   
+        let filteredData = samples.filter((sample) => sample.id === selectedValue);
+  
+        let obj = filteredData[0];
+        
+        let trace = [{
+            x: obj.otu_ids,
+            y: obj.sample_values,
+            text: obj.otu_labels,
+            mode: "markers",
+            marker: {
+                size: obj.sample_values,
+                color: obj.otu_ids,
+                colorscale: "Sunset"
+            }
+        }];
+    
+         let layout = {
+            xaxis: {title: "OTU ID"}
+        };
+    
+         Plotly.newPlot("bubble", trace, layout);
+    });
 }
 
-// console.log(sampleValues.slice(0,10))
-// console.log(samplesPlotData[0])
 
+function init() {
 
-let layoutBar = {
-    xaxis:{automargin:true},
-    width: 500,
-    height: 500
+    let dropdownMenu = d3.select("#selDataset");
+
+        d3.json(url).then((data) => {
+        console.log(`Data: ${data}`);
+
+        let names = data.names;
+ 
+        names.forEach((name) => {
+           
+            dropdownMenu.append("option").text(name).property("value", name);
+        });
+
+        let name = names[0];
+
+        demo(name);
+        bar(name);
+        bubble(name);
+           });
 }
 
 
-Plotly.newPlot('bar', [traceBar],layoutBar)
+ function demo(selectedValue) {
+ 
+    d3.json(url).then((data) => {
+        console.log(`Data: ${data}`);
 
-});
+        let metadata = data.metadata;
+      
+        let filteredData = metadata.filter((meta) => meta.id == selectedValue);
+      
+         let obj = filteredData[0]
+ 
+        let entries = Object.entries(obj);
+
+        entries.forEach(([key,value]) => {
+            d3.select("#sample-metadata").append("h5").text(`${key}: ${value}`);
+        });
+
+        console.log(entries);
+    });
+  }
 
 
-    
+function optionChanged(selectedValue) {
+    demo(selectedValue);
+    bar(selectedValue);
+    bubble(selectedValue);
+   }
+
+init();
 
